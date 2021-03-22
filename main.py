@@ -125,8 +125,7 @@ def correct_inputs(x, y):
 
 if __name__ == '__main__':
     #Take input
-    #input_object=input_main()
-    input_object=input_o(49.945895, 7.846655, 49.952333, 7.820331, 16)
+    input_object=input_main()
     # Get the pixel locations
     pixel_left=get_pixel_xy(input_object.left_latitude, input_object.left_longitude, input_object.level)
     pixel_right=get_pixel_xy(input_object.right_latitude, input_object.right_longitude, input_object.level)
