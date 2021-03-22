@@ -63,8 +63,8 @@ def get_pixel_xy(latitude, longitude, level):
 
 ## Get tile position
 def get_tile_position(pixels):
-    tile_x=pixels[0]/256
-    tile_y=pixels[1]/256
+    tile_x=int(pixels[0]/256)
+    tile_y=int(pixels[1]/256)
 
     return (tile_x, tile_y)
 
@@ -88,36 +88,57 @@ def get_quad_key(tiles, level):
 
 
 # Get a image with quad key
-def get_image(url):
+def get_image(url, image_name):
 
-    response=requests.get(url, stream=True)
-
+    response=requests.get(url)
+    print("Downloaded tile "+image_name)
     # Write image to directory
+    with open("tiles/"+image_name, "wb") as f:
+        f.write(response.content)
 
-
-    return image
+    return response
 
 
 
 def download_images(tile_left, tile_right, level):
 
-    quad_key=get_quad_key((), level)
-    tile_image=get_image("http://h0.ortho.tiles.virtualearth.net/tiles/h"+quad_key+".jpeg?g=131")
+    i=1
+    for i_y in range(tile_left[1], tile_right[1]+1):
+        for i_x in range(tile_left[0], tile_right[0]+1):
+            quad_key=get_quad_key((i_x, i_y), level)
+            get_image("http://h0.ortho.tiles.virtualearth.net/tiles/h"+quad_key+".jpeg?g=131", "tile_"+str(i)+".jpeg")
+            i=i+1
 
+
+def correct_inputs(x, y):
+    right_1=max(x[1],y[1])
+    right_0=max(x[0],y[0])
+    left_0=min(x[0],y[0])
+    left_1 = min(x[1], y[1])
+
+    x=(left_0, left_1)
+    y=(right_0, right_1)
+
+    return (x, y)
 
 
 
 if __name__ == '__main__':
     #Take input
-    input_object=input_main()
+    #input_object=input_main()
+    input_object=input_o(49.945895, 7.846655, 49.952333, 7.820331, 16)
     # Get the pixel locations
     pixel_left=get_pixel_xy(input_object.left_latitude, input_object.left_longitude, input_object.level)
     pixel_right=get_pixel_xy(input_object.right_latitude, input_object.right_longitude, input_object.level)
     # Get the tile locations
     tile_left=get_tile_position(pixel_left)
     tile_right=get_tile_position(pixel_right)
+    # Correct the inputs
+    pixel_left, pixel_right=correct_inputs(pixel_left, pixel_right)
+    tile_left, tile_right=correct_inputs(tile_left, tile_right)
     # Download Image
     download_images(tile_left, tile_right, input_object.level)
+    # Stitch images ??
 
 
 
