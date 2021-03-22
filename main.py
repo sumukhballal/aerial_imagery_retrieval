@@ -91,23 +91,34 @@ def get_quad_key(tiles, level):
 def get_image(url, image_name):
 
     response=requests.get(url)
-    print("Downloaded tile "+image_name)
+    print("Downloaded tile : "+image_name)
     # Write image to directory
     with open("tiles/"+image_name, "wb") as f:
         f.write(response.content)
 
-    return response
+    image=numpy.asarray(bytearray(response.content), dtype="uint8")
+
+    return cv.imdecode(image, cv.IMREAD_COLOR)
+
 
 
 
 def download_images(tile_left, tile_right, level):
 
     i=1
+    y_image_list=[]
     for i_y in range(tile_left[1], tile_right[1]+1):
+        x_image_list=[]
         for i_x in range(tile_left[0], tile_right[0]+1):
             quad_key=get_quad_key((i_x, i_y), level)
-            get_image("http://h0.ortho.tiles.virtualearth.net/tiles/h"+quad_key+".jpeg?g=131", "tile_"+str(i)+".jpeg")
+            image_array=get_image("http://h0.ortho.tiles.virtualearth.net/tiles/h"+quad_key+".jpeg?g=131", "tile_"+str(i)+".jpeg")
+            x_image_list.append(image_array)
             i=i+1
+        x_image_concatenated=numpy.concatenate(x_image_list,1)
+        y_image_list.append(x_image_concatenated)
+
+    return y_image_list
+
 
 
 def correct_inputs(x, y):
@@ -122,23 +133,32 @@ def correct_inputs(x, y):
     return (x, y)
 
 
+def stitch_images(images):
+    images=numpy.concatenate(images, 0)
+    cv.imwrite("final_stitched_image.jpeg", images)
+
 
 if __name__ == '__main__':
     #Take input
     input_object=input_main()
     # Get the pixel locations
+    print("Get Pixel locations! ")
     pixel_left=get_pixel_xy(input_object.left_latitude, input_object.left_longitude, input_object.level)
     pixel_right=get_pixel_xy(input_object.right_latitude, input_object.right_longitude, input_object.level)
     # Get the tile locations
+    print("Get Tile locations! ")
     tile_left=get_tile_position(pixel_left)
     tile_right=get_tile_position(pixel_right)
     # Correct the inputs
+    print("Correct the inputs! ")
     pixel_left, pixel_right=correct_inputs(pixel_left, pixel_right)
     tile_left, tile_right=correct_inputs(tile_left, tile_right)
     # Download Image
-    download_images(tile_left, tile_right, input_object.level)
-    # Stitch images ??
-
+    print("Download the tiles! ")
+    images=download_images(tile_left, tile_right, input_object.level)
+    # Stitch images
+    print("Stitching the downloaded tiles! ")
+    stitch_images(images)
 
 
 
